@@ -5,7 +5,7 @@ package {{packageName}}.{{packageApi}};
 {{healthCheckApiAnnotations}}
 public class ApiHealthCheck {
 
-	{{healthCheckApiAnnotationRequestMapping}}
+	@RequestMapping(value = "/healthcheck", method = RequestMethod.GET)
 	public ResponseEntity healthCheck(){
 		return new ResponseEntity<>("OK", HttpStatus.OK);
 	}

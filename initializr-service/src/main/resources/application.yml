@@ -282,6 +282,7 @@ initializr:
           id: web
           description: Full-stack web development with Tomcat and Spring MVC
           weight: 100
+          default: true
           facets:
             - web
             - json

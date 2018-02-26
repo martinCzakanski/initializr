@@ -236,6 +236,7 @@ public class ProjectGenerator {
 		File src = new File(new File(dir, "src/main/" + codeLocation),
 				request.getPackageName().replace(".", "/"));
 		src.mkdirs();
+
 		String extension = ("kotlin".equals(language) ? "kt" : language);
 		write(new File(src, applicationName + "." + extension),
 				"Application." + extension, model);
@@ -319,8 +320,10 @@ public class ProjectGenerator {
 		}
 
 		if(isJava8OrLater(request)) {
-			String body = templateRenderer.process("ApiHealthCheck", model);
-			writeText(dir, body);
+			dir.mkdirs();
+			String filename = "ApiHealthCheck" + "." + request.getLanguage();
+			String body = templateRenderer.process(filename, model);
+			writeText(new File(dir, filename), body);
 		}
 	}
 
@@ -552,7 +555,6 @@ public class ProjectGenerator {
 		model.put("packageApi", "api");
 		model.put("healthCheckApiImports", imports.toString());
 		model.put("healthCheckApiAnnotations", annotations.toString());
-		model.put("healthCheckApiAnnotationRequestMapping", "@RequestMapping(value = \"/healthcheck\", method = RequestMethod.GET)");
 	}
 
 	protected void setupTestModel(ProjectRequest request, Map<String, Object> model) {
