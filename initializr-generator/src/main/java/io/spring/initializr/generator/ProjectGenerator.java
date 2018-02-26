@@ -245,6 +245,8 @@ public class ProjectGenerator {
 			write(new File(src, fileName), fileName, model);
 		}
 
+		generateHealthCheck(new File(src, "api"), request, model);
+
 		File test = new File(new File(dir, "src/test/" + codeLocation),
 				request.getPackageName().replace(".", "/"));
 		test.mkdirs();
@@ -255,6 +257,8 @@ public class ProjectGenerator {
 		File resources = new File(dir, "src/main/resources");
 		resources.mkdirs();
 		writeText(new File(resources, "application.properties"), "");
+
+
 
 		if (request.hasWebFacet()) {
 			new File(dir, "src/main/resources/templates").mkdirs();
@@ -307,6 +311,17 @@ public class ProjectGenerator {
 	private void publishProjectFailedEvent(ProjectRequest request, Exception cause) {
 		ProjectFailedEvent event = new ProjectFailedEvent(request, cause);
 		eventPublisher.publishEvent(event);
+	}
+
+	protected void generateHealthCheck(File dir, ProjectRequest request, Map<String, ?> model) {
+		if(!request.isInitHealthCheck()) {
+			return;
+		}
+
+		if(isJava8OrLater(request)) {
+			String body = templateRenderer.process("ApiHealthCheck", model);
+			writeText(dir, body);
+		}
 	}
 
 	/**
@@ -427,6 +442,7 @@ public class ProjectGenerator {
 
 		model.put("isRelease", request.getBootVersion().contains("RELEASE"));
 		setupApplicationModel(request, model);
+		setupHealthCheckModel(request, model);
 
 		// Gradle plugin has changed as from 1.3.0
 		model.put("bootOneThreeAvailable", VERSION_1_3_0_M1
@@ -514,8 +530,29 @@ public class ProjectGenerator {
 		}
 		model.put("applicationImports", imports.toString());
 		model.put("applicationAnnotations", annotations.toString());
+	}
 
+	protected void setupHealthCheckModel(ProjectRequest request,
+										 Map<String, Object> model) {
+		if (!request.isInitHealthCheck()) {
+			return;
+		}
 
+		Imports imports = new Imports(request.getLanguage());
+		Annotations annotations = new Annotations();
+
+		imports.add("org.springframework.http.HttpStatus")
+				.add("org.springframework.http.ResponseEntity")
+				.add("org.springframework.web.bind.annotation.RequestMapping")
+				.add("org.springframework.web.bind.annotation.RequestMethod")
+				.add("org.springframework.web.bind.annotation.RestController");
+
+		annotations.add("@RestController");
+
+		model.put("packageApi", "api");
+		model.put("healthCheckApiImports", imports.toString());
+		model.put("healthCheckApiAnnotations", annotations.toString());
+		model.put("healthCheckApiAnnotationRequestMapping", "@RequestMapping(value = \"/healthcheck\", method = RequestMethod.GET)");
 	}
 
 	protected void setupTestModel(ProjectRequest request, Map<String, Object> model) {
